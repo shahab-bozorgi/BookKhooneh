@@ -3,16 +3,16 @@ package main
 import (
 	"BookKhoone/internal/config"
 	"BookKhoone/internal/database"
-	"fmt"
+	"BookKhoone/internal/routes"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	cfg := config.LoadConfig()
 	db := database.Connect(cfg)
+	r := gin.Default()
 
-	fmt.Println("Connected to database:", cfg.DBName)
-	fmt.Println("Server running on port:", cfg.Port)
-
-	// Gin server will be added later
-	_ = db // just to avoid unused warning for now
+	routes.SetupRoutes(r, db, cfg)
+	r.Run(":" + cfg.Port)
 }
