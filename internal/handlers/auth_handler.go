@@ -75,7 +75,7 @@ func LoginHandler(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
-			"message": "User created successfully",
+			"message": "login successfully",
 			"token":   token,
 		})
 	}
