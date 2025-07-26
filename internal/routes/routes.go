@@ -12,7 +12,9 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 	auth := api.Group("/auth")
 	{
-		auth.POST("/register", handlers.Register(db, cfg))
+		auth.POST("/register", handlers.RegisterHandler(db, cfg))
+		auth.POST("/login", handlers.LoginHandler(db, cfg))
+
 	}
 
 }
