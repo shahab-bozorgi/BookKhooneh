@@ -16,5 +16,9 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		auth.POST("/login", handlers.LoginHandler(db, cfg))
 
 	}
+	books := api.Group("/books")
+	{
+		books.POST("/create", handlers.CreateBookHandler(db))
+	}
 
 }

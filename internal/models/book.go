@@ -8,4 +8,6 @@ type Book struct {
 	Author      string
 	Description string
 	Reviews     []Review
+
+	UserId *uint `gorm:"default:null"`
 }
