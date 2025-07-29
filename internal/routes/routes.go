@@ -3,6 +3,7 @@ package routes
 import (
 	"BookKhoone/internal/config"
 	"BookKhoone/internal/handlers"
+	"BookKhoone/internal/middlewares"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
@@ -18,7 +19,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	}
 	books := api.Group("/books")
 	{
-		books.POST("/create", handlers.CreateBookHandler(db))
+		books.POST("/create", middlewares.AuthMiddleware(), handlers.CreateBookHandler(db))
 		books.GET("/get_all", handlers.GetAllBooksHandler(db))
 	}
 
