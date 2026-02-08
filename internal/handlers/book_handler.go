@@ -52,7 +52,7 @@ func CreateBookHandler(db *gorm.DB) gin.HandlerFunc {
 			Title:       input.Title,
 			Author:      input.Author,
 			Description: input.Description,
-			UserId:      &userID,
+			UserID:      &userID,
 		}
 
 		createdBook, err := services.CreateBook(db, book)
@@ -65,7 +65,7 @@ func CreateBookHandler(db *gorm.DB) gin.HandlerFunc {
 			"title":       createdBook.Title,
 			"author":      createdBook.Author,
 			"description": createdBook.Description,
-			"user_id":     createdBook.UserId,
+			"user_id":     createdBook.UserID,
 		})
 	}
 }
@@ -86,6 +86,24 @@ func GetAllBooksHandler(db *gorm.DB) gin.HandlerFunc {
 		}
 		c.JSON(http.StatusOK, gin.H{
 			"books": response,
+		})
+	}
+}
+
+func GetBookHandler(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		name, exists := c.Get("book_name")
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Book not found in library"})
+			return
+		}
+		book, err := services.GetBook(db, name.(string))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"book": book,
 		})
 	}
 }

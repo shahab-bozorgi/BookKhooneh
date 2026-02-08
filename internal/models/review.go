@@ -4,11 +4,13 @@ import "gorm.io/gorm"
 
 type Review struct {
 	gorm.Model
-	BookID  uint
-	UserID  uint
-	Rating  int
-	Comment string
 
-	Book Book
-	User User
+	BookID uint `gorm:"not null"`
+	UserID uint `gorm:"not null"`
+
+	Rating  int    `gorm:"not null;check:rating >= 1 AND rating <= 5"`
+	Comment string `gorm:"type:text"`
+
+	Book Book `gorm:"constraint:OnDelete:CASCADE;"`
+	User User `gorm:"constraint:OnDelete:CASCADE;"`
 }

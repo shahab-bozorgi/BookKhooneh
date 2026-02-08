@@ -21,6 +21,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	{
 		books.POST("/create", middlewares.AuthMiddleware(), handlers.CreateBookHandler(db))
 		books.GET("/get_all", handlers.GetAllBooksHandler(db))
+		books.GET("/get/:name", handlers.GetBookHandler(db))
 	}
 
 }
