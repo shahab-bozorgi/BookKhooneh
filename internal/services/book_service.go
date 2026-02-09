@@ -20,10 +20,38 @@ func GetAllBooks(db *gorm.DB) ([]models.Book, error) {
 	return books, nil
 }
 
-func GetBook(db *gorm.DB, name string) (models.Book, error) {
+func GetBook(db *gorm.DB, title string) (models.Book, error) {
 	var book models.Book
-	if err := db.Where("name = ?", name).First(&book).Error; err != nil {
+	if err := db.Where("title = ?", title).First(&book).Error; err != nil {
 		return models.Book{}, err
 	}
 	return book, nil
+}
+
+func UpdateBook(db *gorm.DB, id uint, updatedData map[string]interface{}) (*models.Book, error) {
+	var book models.Book
+
+	if err := db.First(&book, id).Error; err != nil {
+		return nil, err
+	}
+
+	if err := db.Model(&book).Updates(updatedData).Error; err != nil {
+		return nil, err
+	}
+
+	return &book, nil
+}
+
+func DeleteBook(db *gorm.DB, id uint) error {
+	var book models.Book
+
+	if err := db.First(&book, id).Error; err != nil {
+		return err
+	}
+
+	if err := db.Delete(&book).Error; err != nil {
+		return err
+	}
+
+	return nil
 }

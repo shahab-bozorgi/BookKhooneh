@@ -92,18 +92,62 @@ func GetAllBooksHandler(db *gorm.DB) gin.HandlerFunc {
 
 func GetBookHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		name, exists := c.Get("book_name")
-		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Book not found in library"})
-			return
-		}
-		book, err := services.GetBook(db, name.(string))
+		title := c.Param("title")
+
+		book, err := services.GetBook(db, title)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(404, gin.H{"error": "Book not found in library"})
 			return
 		}
+
+		c.JSON(200, gin.H{"book": book})
+	}
+}
+
+func UpdateBookHandler(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idParam := c.Param("id")
+		bookID, err := strconv.ParseUint(idParam, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
+			return
+		}
+
+		var input map[string]interface{}
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+			return
+		}
+
+		updatedBook, err := services.UpdateBook(db, uint(bookID), input)
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Book not found or update failed"})
+			return
+		}
+
 		c.JSON(http.StatusOK, gin.H{
-			"book": book,
+			"title":       updatedBook.Title,
+			"author":      updatedBook.Author,
+			"description": updatedBook.Description,
+			"user_id":     updatedBook.UserID,
 		})
+	}
+}
+
+func DeleteBookHandler(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		idParam := c.Param("id")
+		bookID, err := strconv.ParseUint(idParam, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
+			return
+		}
+
+		if err := services.DeleteBook(db, uint(bookID)); err != nil {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Book not found or deletion failed"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "Book deleted successfully"})
 	}
 }
