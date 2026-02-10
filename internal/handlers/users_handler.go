@@ -18,11 +18,11 @@ type AllUsersResponse struct {
 	Email    string `json:"email"`
 }
 
-func GetUser(db *gorm.DB) gin.HandlerFunc {
+func GetUserHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.Param("username")
 
-		user, err := services.GetUser(db, username)
+		user, err := services.GetUserService(db, username)
 		if err != nil {
 			c.JSON(404, gin.H{"message": "user not found"})
 			return
@@ -33,9 +33,9 @@ func GetUser(db *gorm.DB) gin.HandlerFunc {
 
 }
 
-func GetAllUsers(db *gorm.DB) gin.HandlerFunc {
+func GetAllUsersHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users, err := services.GetAllUsers(db)
+		users, err := services.GetAllUsersService(db)
 
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})

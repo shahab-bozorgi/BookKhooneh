@@ -5,11 +5,14 @@ import (
 	"BookKhoone/internal/handlers"
 	"BookKhoone/internal/middlewares"
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/gorm"
 )
 
 func SetupRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 	api := r.Group("/api")
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	auth := api.Group("/auth")
 	{
@@ -20,8 +23,8 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 
 	users := api.Group("/users")
 	{
-		users.GET("/:username", handlers.GetUser(db))
-		users.GET("/get_all", middlewares.AuthMiddleware(db), handlers.GetAllUsers(db))
+		users.GET("/:username", handlers.GetUserHandler(db))
+		users.GET("/get_all", middlewares.AuthMiddleware(db), handlers.GetAllUsersHandler(db))
 	}
 
 	books := api.Group("/books")

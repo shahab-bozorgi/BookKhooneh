@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    env_file:
+      - ./.env
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "${DATABASE_PORT}:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    env_file:
+      - ./.env   # می‌تونی نگه داری
+    volumes:
+      - ./.env:/app/.env:ro   # این خط اضافه کن
+    ports:
+      - "8000:8080"
+    environment:
+      DB_HOST: ${DATABASE_HOST}
+      DB_PORT: ${DATABASE_PORT}
+      DB_USER: ${DATABASE_USER}
+      DB_PASSWORD: ${DATABASE_PASSWORD}
+      DB_NAME: ${DATABASE_NAME}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      - db
+
+
+volumes:
+  db_data:

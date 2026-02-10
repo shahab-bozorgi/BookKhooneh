@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"BookKhoone/internal/config"
+	"BookKhoone/internal/dto"
 	"BookKhoone/internal/models"
 	"BookKhoone/internal/services"
 	"net/http"
@@ -50,33 +51,41 @@ func RegisterHandler(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 	}
 }
 
+// Login godoc
+// @Summary Login user
+// @Description Login with username and password and receive JWT token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param data body dto.LoginRequest true "Login data"
+// @Success 201 {object} dto.LoginResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Router /auth/login [post]
 func LoginHandler(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var req struct {
-			Username string `json:"username"`
-			Password string `json:"password"`
-		}
+		var req dto.LoginRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+			c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid request"})
 			return
 		}
 
 		user, err := services.LoginUser(db, req.Username, req.Password)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: err.Error()})
 			return
 		}
 
 		token, err := services.GenerateUserToken(user.ID, cfg.JWTSecretKey)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
+			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate token"})
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{
-			"message": "login successfully",
-			"token":   token,
+		c.JSON(http.StatusCreated, dto.LoginResponse{
+			Message: "login successfully",
+			Token:   token,
 		})
 	}
 }
