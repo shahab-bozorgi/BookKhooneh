@@ -1,1 +1,37 @@
 .envnohup.out
+# Binaries
+/main
+/server
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Build directories
+bin/
+obj/
+
+# Dependency directories
+vendor/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Go module cache
+*.mod.cache
+
+# Environment files
+.env
+
+# IDE / Editor
+.idea/
+*.iml
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Docker
+docker-compose.override.yml
