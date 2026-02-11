@@ -1,6 +1,6 @@
 basePath: /api
 definitions:
-  dto.ErrorResponse:
+  dto.LoginErrorResponse:
     properties:
       error:
         type: string
@@ -15,6 +15,30 @@ definitions:
         type: string
     type: object
   dto.LoginResponse:
+    properties:
+      message:
+        type: string
+      token:
+        type: string
+    type: object
+  dto.RegisterErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  dto.RegisterRequest:
+    properties:
+      email:
+        example: amu@example.com
+        type: string
+      password:
+        example: "12345678"
+        type: string
+      username:
+        example: amu
+        type: string
+    type: object
+  dto.RegisterResponse:
     properties:
       message:
         type: string
@@ -50,11 +74,41 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.LoginErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/dto.ErrorResponse'
+            $ref: '#/definitions/dto.LoginErrorResponse'
+      summary: Login user
+      tags:
+      - Auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register with username, password and Email and receive JWT token
+      parameters:
+      - description: Register data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RegisterRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/dto.RegisterResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.RegisterErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.RegisterErrorResponse'
       summary: Login user
       tags:
       - Auth

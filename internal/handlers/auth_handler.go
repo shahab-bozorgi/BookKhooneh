@@ -11,15 +11,20 @@ import (
 	"gorm.io/gorm"
 )
 
-type RegisterInput struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-}
-
+// Register godoc
+// @Summary Login user
+// @Description Register with username, password and Email and receive JWT token
+// @Tags Auth
+// @Accept json
+// @Produce json
+// @Param data body dto.RegisterRequest true "Register data"
+// @Success 201 {object} dto.RegisterResponse
+// @Failure 400 {object} dto.RegisterErrorResponse
+// @Failure 401 {object} dto.RegisterErrorResponse
+// @Router /auth/register [post]
 func RegisterHandler(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var input RegisterInput
+		var input dto.RegisterRequest
 
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -59,27 +64,27 @@ func RegisterHandler(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 // @Produce json
 // @Param data body dto.LoginRequest true "Login data"
 // @Success 201 {object} dto.LoginResponse
-// @Failure 400 {object} dto.ErrorResponse
-// @Failure 401 {object} dto.ErrorResponse
+// @Failure 400 {object} dto.LoginErrorResponse
+// @Failure 401 {object} dto.LoginErrorResponse
 // @Router /auth/login [post]
 func LoginHandler(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var req dto.LoginRequest
 
 		if err := c.ShouldBindJSON(&req); err != nil {
-			c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Invalid request"})
+			c.JSON(http.StatusBadRequest, dto.LoginErrorResponse{Error: "Invalid request"})
 			return
 		}
 
 		user, err := services.LoginUser(db, req.Username, req.Password)
 		if err != nil {
-			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{Error: err.Error()})
+			c.JSON(http.StatusUnauthorized, dto.LoginErrorResponse{Error: err.Error()})
 			return
 		}
 
 		token, err := services.GenerateUserToken(user.ID, cfg.JWTSecretKey)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: "Failed to generate token"})
+			c.JSON(http.StatusInternalServerError, dto.LoginErrorResponse{Error: "Failed to generate token"})
 			return
 		}
 
