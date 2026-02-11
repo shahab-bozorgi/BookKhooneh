@@ -1,5 +1,82 @@
 basePath: /api
 definitions:
+  dto.AllUsersResponse:
+    properties:
+      email:
+        example: amu@example.com
+        type: string
+      username:
+        example: amu
+        type: string
+    type: object
+  dto.BookErrorResponse:
+    properties:
+      error:
+        example: Unauthorized
+        type: string
+    type: object
+  dto.BookResponse:
+    properties:
+      author:
+        example: kamo
+        type: string
+      description:
+        example: A nice book
+        type: string
+      id:
+        example: 1
+        type: integer
+      title:
+        example: bigane
+        type: string
+    type: object
+  dto.CreateBookRequest:
+    properties:
+      author:
+        example: F. Scott Fitzgerald
+        type: string
+      description:
+        example: A classic novel set in the 1920s
+        type: string
+      title:
+        example: The Great Gatsby
+        type: string
+    type: object
+  dto.CreateBookResponse:
+    properties:
+      author:
+        example: F. Scott Fitzgerald
+        type: string
+      description:
+        example: A classic novel set in the 1920s
+        type: string
+      id:
+        example: 1
+        type: integer
+      title:
+        example: The Great Gatsby
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  dto.DeleteBookResponse:
+    properties:
+      message:
+        example: Book deleted successfully
+        type: string
+    type: object
+  dto.DeleteErrorResponse:
+    properties:
+      error:
+        example: Book not found or deletion failed
+        type: string
+    type: object
+  dto.GetUserResponse:
+    properties:
+      user:
+        $ref: '#/definitions/dto.UserResponse'
+    type: object
   dto.LoginErrorResponse:
     properties:
       error:
@@ -43,6 +120,55 @@ definitions:
       message:
         type: string
       token:
+        type: string
+    type: object
+  dto.UpdateBookRequest:
+    properties:
+      author:
+        example: new author
+        type: string
+      description:
+        example: updated description
+        type: string
+      title:
+        example: new title
+        type: string
+    type: object
+  dto.UpdateBookResponse:
+    properties:
+      author:
+        type: string
+      description:
+        type: string
+      title:
+        type: string
+      user_id:
+        type: integer
+    type: object
+  dto.UserErrorResponse:
+    properties:
+      error:
+        type: string
+    type: object
+  dto.UserResponse:
+    properties:
+      avatar:
+        example: https://example.com/avatar.jpg
+        type: string
+      bio:
+        example: Backend developer
+        type: string
+      email:
+        example: amu@example.com
+        type: string
+      full_name:
+        example: Amu Shahab
+        type: string
+      id:
+        example: 1
+        type: integer
+      username:
+        example: amu
         type: string
     type: object
 host: localhost:8080
@@ -112,6 +238,224 @@ paths:
       summary: Login user
       tags:
       - Auth
+  /books/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a new book (requires authentication)
+      parameters:
+      - description: Book data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CreateBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Create a new book
+      tags:
+      - Books
+  /books/delete/{id}:
+    delete:
+      description: Delete a book by its ID. Requires authentication.
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.DeleteBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.DeleteErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.DeleteErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.DeleteErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Delete a book
+      tags:
+      - Books
+  /books/get/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve a single book details by providing its id. Requires authentication.
+      parameters:
+      - description: id of the book
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.BookResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get a book by id
+      tags:
+      - Books
+  /books/get_all:
+    get:
+      consumes:
+      - application/json
+      description: Retrieve all books. Requires authentication via Bearer token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.BookResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+      security:
+      - ApiKeyAuth: []
+      summary: Get all books
+      tags:
+      - Books
+  /books/update/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Update book details by book ID. Requires authentication.
+      parameters:
+      - description: Book ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Book update data
+        in: body
+        name: data
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateBookRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.UpdateBookResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.BookErrorResponse'
+      security:
+      - BearerAuth: []
+      - ApiKeyAuth: []
+      summary: Update a book
+      tags:
+      - Books
+  /users/{username}:
+    get:
+      consumes:
+      - application/json
+      description: Get user details by providing the username
+      parameters:
+      - description: Username of the user
+        in: path
+        name: username
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.GetUserResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.UserErrorResponse'
+      summary: Get user by username
+      tags:
+      - Users
+  /users/get_all:
+    get:
+      description: Get all user details (requires authentication)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.AllUsersResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.UserErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/dto.UserErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get all users
+      tags:
+      - Users
 securityDefinitions:
   BearerAuth:
     in: header

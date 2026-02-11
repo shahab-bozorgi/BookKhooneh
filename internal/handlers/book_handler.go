@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"BookKhoone/internal/dto"
 	"BookKhoone/internal/models"
 	"BookKhoone/internal/services"
 	"github.com/gin-gonic/gin"
@@ -10,91 +11,116 @@ import (
 	"gorm.io/gorm"
 )
 
-type Books struct {
-	Title       string `json:"title" binding:"required"`
-	Author      string `json:"author" binding:"required"`
-	Description string `json:"description"`
-}
-
-type BookResponse struct {
-	Title  string `json:"title"`
-	Author string `json:"author"`
-}
-
+// CreateBookHandler godoc
+// @Summary Create a new book
+// @Description Create a new book (requires authentication)
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param data body dto.CreateBookRequest true "Book data"
+// @Success 200 {object} dto.CreateBookResponse
+// @Failure 400 {object} dto.BookErrorResponse
+// @Failure 401 {object} dto.BookErrorResponse
+// @Router /books/create [post]
+// @Security ApiKeyAuth
 func CreateBookHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		userIDValue, exists := c.Get("userID")
+		userIDValue, exists := c.Get("user_id")
 		if !exists {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "User not found in context"})
+			c.JSON(http.StatusUnauthorized, dto.BookErrorResponse{Error: "User not found in context"})
 			return
 		}
 
-		userIDStr, ok := userIDValue.(string)
+		userID, ok := userIDValue.(uint)
 		if !ok {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID format"})
+			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{Error: "Invalid user ID format"})
 			return
 		}
 
-		userIDUint64, err := strconv.ParseUint(userIDStr, 10, 64)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to parse user ID"})
-			return
-		}
-		userID := uint(userIDUint64)
-
-		var input Books
+		var input dto.CreateBookRequest
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			c.JSON(http.StatusBadRequest, dto.BookErrorResponse{Error: err.Error()})
 			return
 		}
 
+		// استفاده از pointer برای UserID
+		userIDPtr := userID
 		book := models.Book{
 			Title:       input.Title,
 			Author:      input.Author,
 			Description: input.Description,
-			UserID:      &userID,
+			UserID:      &userIDPtr,
 		}
 
 		createdBook, err := services.CreateBook(db, book)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create book"})
+			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{Error: "Failed to create book"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"title":       createdBook.Title,
-			"author":      createdBook.Author,
-			"description": createdBook.Description,
-			"user_id":     createdBook.UserID,
+		c.JSON(http.StatusOK, dto.CreateBookResponse{
+			ID:          createdBook.ID,
+			Title:       createdBook.Title,
+			Author:      createdBook.Author,
+			Description: createdBook.Description,
+			UserID:      userID,
 		})
 	}
 }
 
+// GetAllBooksHandler godoc
+// @Summary Get all books
+// @Description Retrieve all books. Requires authentication via Bearer token.
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Security ApiKeyAuth
+// @Success 200 {array} dto.BookResponse
+// @Failure 401 {object} dto.BookErrorResponse
+// @Failure 500 {object} dto.BookErrorResponse
+// @Router /books/get_all [get]
 func GetAllBooksHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		books, err := services.GetAllBooks(db)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{Error: err.Error()})
 			return
 		}
-		var response []BookResponse
+
+		var response []dto.BookResponse
 		for _, book := range books {
-			response = append(response, BookResponse{
-				Title:  book.Title,
-				Author: book.Author,
+			response = append(response, dto.BookResponse{
+				ID:          book.ID,
+				Title:       book.Title,
+				Author:      book.Author,
+				Description: book.Description,
 			})
 		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"books": response,
 		})
 	}
 }
 
+// GetBookHandler godoc
+// @Summary Get a book by id
+// @Description Retrieve a single book details by providing its id. Requires authentication.
+// @Tags Books
+// @Accept json
+// @Produce json
+// @Param id path string true "id of the book"
+// @Security ApiKeyAuth
+// @Success 200 {array} dto.BookResponse
+// @Failure 401 {object} dto.BookErrorResponse
+// @Failure 404 {object} dto.BookErrorResponse
+// @Router /books/get/{id} [get]
 func GetBookHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		title := c.Param("title")
+		idParam := c.Param("id")
 
-		book, err := services.GetBook(db, title)
+		book, err := services.GetBook(db, idParam)
 		if err != nil {
 			c.JSON(404, gin.H{"error": "Book not found in library"})
 			return
@@ -104,36 +130,74 @@ func GetBookHandler(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// UpdateBookHandler godoc
+// @Summary Update a book
+// @Description Update book details by book ID. Requires authentication.
+// @Tags Books
+// @Accept json
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Book ID"
+// @Param data body dto.UpdateBookRequest true "Book update data"
+// @Security ApiKeyAuth
+// @Success 200 {object} dto.UpdateBookResponse
+// @Failure 400 {object} dto.BookErrorResponse
+// @Failure 401 {object} dto.BookErrorResponse
+// @Failure 404 {object} dto.BookErrorResponse
+// @Router /books/update/{id} [patch]
 func UpdateBookHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
 		bookID, err := strconv.ParseUint(idParam, 10, 64)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid book ID"})
+			c.JSON(http.StatusBadRequest, dto.BookErrorResponse{Error: "Invalid book ID"})
 			return
 		}
 
-		var input map[string]interface{}
+		var input dto.UpdateBookRequest
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid JSON"})
+			c.JSON(http.StatusBadRequest, dto.BookErrorResponse{Error: "Invalid JSON"})
 			return
 		}
 
-		updatedBook, err := services.UpdateBook(db, uint(bookID), input)
+		updateData := map[string]interface{}{}
+		if input.Title != "" {
+			updateData["title"] = input.Title
+		}
+		if input.Author != "" {
+			updateData["author"] = input.Author
+		}
+		if input.Description != "" {
+			updateData["description"] = input.Description
+		}
+
+		updatedBook, err := services.UpdateBook(db, uint(bookID), updateData)
 		if err != nil {
-			c.JSON(http.StatusNotFound, gin.H{"error": "Book not found or update failed"})
+			c.JSON(http.StatusNotFound, dto.BookErrorResponse{Error: "Book not found or update failed"})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"title":       updatedBook.Title,
-			"author":      updatedBook.Author,
-			"description": updatedBook.Description,
-			"user_id":     updatedBook.UserID,
+		c.JSON(http.StatusOK, dto.UpdateBookResponse{
+			Title:       updatedBook.Title,
+			Author:      updatedBook.Author,
+			Description: updatedBook.Description,
+			UserID:      *updatedBook.UserID,
 		})
 	}
 }
 
+// DeleteBookHandler godoc
+// @Summary Delete a book
+// @Description Delete a book by its ID. Requires authentication.
+// @Tags Books
+// @Security BearerAuth
+// @Produce json
+// @Param id path int true "Book ID"
+// @Success 200 {object} dto.DeleteBookResponse
+// @Failure 400 {object} dto.DeleteErrorResponse
+// @Failure 401 {object} dto.DeleteErrorResponse
+// @Failure 404 {object} dto.DeleteErrorResponse
+// @Router /books/delete/{id} [delete]
 func DeleteBookHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")

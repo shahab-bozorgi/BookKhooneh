@@ -1,23 +1,23 @@
 package handlers
 
 import (
+	"BookKhoone/internal/dto"
 	"BookKhoone/internal/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
 )
 
-type Users struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email"`
-	Role     string `json:"role"`
-}
-
-type AllUsersResponse struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email"`
-}
-
+// GetUserHandler godoc
+// @Summary Get user by username
+// @Description Get user details by providing the username
+// @Tags Users
+// @Accept json
+// @Produce json
+// @Param username path string true "Username of the user"
+// @Success 200 {object} dto.GetUserResponse
+// @Failure 404 {object} dto.UserErrorResponse
+// @Router /users/{username} [get]
 func GetUserHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username := c.Param("username")
@@ -33,6 +33,16 @@ func GetUserHandler(db *gorm.DB) gin.HandlerFunc {
 
 }
 
+// GetAllUsersHandler godoc
+// @Summary Get all users
+// @Description Get all user details (requires authentication)
+// @Tags Users
+// @Security BearerAuth
+// @Produce json
+// @Success 200 {array} dto.AllUsersResponse
+// @Failure 401 {object} dto.UserErrorResponse
+// @Failure 404 {object} dto.UserErrorResponse
+// @Router /users/get_all [get]
 func GetAllUsersHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		users, err := services.GetAllUsersService(db)
@@ -42,9 +52,9 @@ func GetAllUsersHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var response []AllUsersResponse
+		var response []dto.AllUsersResponse
 		for _, user := range users {
-			response = append(response, AllUsersResponse{
+			response = append(response, dto.AllUsersResponse{
 				Username: user.Username,
 				Email:    user.Email,
 			})
