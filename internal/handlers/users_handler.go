@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"BookKhoone/internal/dto"
+	"BookKhoone/internal/models"
 	"BookKhoone/internal/services"
+	"BookKhoone/internal/utils"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
@@ -45,24 +47,25 @@ func GetUserHandler(db *gorm.DB) gin.HandlerFunc {
 // @Router /users/get_all [get]
 func GetAllUsersHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		users, err := services.GetAllUsersService(db)
-
+		paginationResult, err := utils.Paginate[models.User](c, db.Model(&models.User{}))
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{Error: err.Error()})
 			return
 		}
 
 		var response []dto.AllUsersResponse
-		for _, user := range users {
+		for _, user := range paginationResult.Data {
 			response = append(response, dto.AllUsersResponse{
 				Username: user.Username,
 				Email:    user.Email,
 			})
 		}
 
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
+			"page":  paginationResult.Page,
+			"size":  paginationResult.Size,
+			"total": paginationResult.Total,
 			"users": response,
 		})
-
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"BookKhoone/internal/dto"
 	"BookKhoone/internal/models"
 	"BookKhoone/internal/services"
+	"BookKhoone/internal/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -82,23 +83,26 @@ func CreateBookHandler(db *gorm.DB) gin.HandlerFunc {
 // @Router /books/get_all [get]
 func GetAllBooksHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		books, err := services.GetAllBooks(db)
+		res, err := utils.Paginate[models.Book](c, db)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{Error: err.Error()})
 			return
 		}
 
-		var response []dto.BookResponse
-		for _, book := range books {
-			response = append(response, dto.BookResponse{
+		var books []dto.BookResponse
+		for _, book := range res.Data {
+			books = append(books, dto.BookResponse{
 				Title:       book.Title,
 				Author:      book.Author,
 				Description: book.Description,
 			})
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"books": response,
+		c.JSON(200, gin.H{
+			"page":  res.Page,
+			"size":  res.Size,
+			"total": res.Total,
+			"books": books,
 		})
 	}
 }
@@ -231,7 +235,6 @@ func DeleteBookHandler(db *gorm.DB) gin.HandlerFunc {
 func FilterBooksHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var filter dto.FilterBooksRequest
-
 		if err := c.ShouldBind(&filter); err != nil {
 			c.JSON(http.StatusBadRequest, dto.BookErrorResponse{
 				Error: err.Error(),
@@ -239,7 +242,15 @@ func FilterBooksHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		books, err := services.FilterBookService(db, filter)
+		query := db.Model(&models.Book{})
+		if len(filter.Author) > 0 {
+			query = query.Where("author IN ?", filter.Author)
+		}
+		if len(filter.Title) > 0 {
+			query = query.Where("title IN ?", filter.Title)
+		}
+
+		paginationResult, err := utils.Paginate[models.Book](c, query)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{
 				Error: err.Error(),
@@ -247,13 +258,20 @@ func FilterBooksHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if len(books) == 0 {
-			c.JSON(http.StatusNotFound, dto.BookErrorResponse{
-				Error: "no books found",
+		var response []dto.BookResponse
+		for _, book := range paginationResult.Data {
+			response = append(response, dto.BookResponse{
+				Title:       book.Title,
+				Author:      book.Author,
+				Description: book.Description,
 			})
-			return
 		}
 
-		c.JSON(http.StatusOK, books)
+		c.JSON(http.StatusOK, gin.H{
+			"page":  paginationResult.Page,
+			"size":  paginationResult.Size,
+			"total": paginationResult.Total,
+			"books": response,
+		})
 	}
 }
