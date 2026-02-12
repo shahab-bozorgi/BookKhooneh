@@ -91,7 +91,6 @@ func GetAllBooksHandler(db *gorm.DB) gin.HandlerFunc {
 		var response []dto.BookResponse
 		for _, book := range books {
 			response = append(response, dto.BookResponse{
-				ID:          book.ID,
 				Title:       book.Title,
 				Author:      book.Author,
 				Description: book.Description,
@@ -213,5 +212,48 @@ func DeleteBookHandler(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		c.JSON(http.StatusOK, gin.H{"message": "Book deleted successfully"})
+	}
+}
+
+// FilterBooksHandler godoc
+// @Summary Filter a book
+// @Description Filter books by author or title. At least one filter is required. Requires authentication.
+// @Tags Books
+// @Security BearerAuth
+// @Produce json
+// @Param author query []string false "Filter by author (can be multiple)"
+// @Param title query []string false "Filter by title (can be multiple)"
+// @Success 200 {object} dto.BookResponse
+// @Failure 400 {object} dto.BookErrorResponse
+// @Failure 401 {object} dto.BookErrorResponse
+// @Failure 404 {object} dto.BookErrorResponse
+// @Router /books/search/ [get]
+func FilterBooksHandler(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var filter dto.FilterBooksRequest
+
+		if err := c.ShouldBind(&filter); err != nil {
+			c.JSON(http.StatusBadRequest, dto.BookErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+
+		books, err := services.FilterBookService(db, filter)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{
+				Error: err.Error(),
+			})
+			return
+		}
+
+		if len(books) == 0 {
+			c.JSON(http.StatusNotFound, dto.BookErrorResponse{
+				Error: "no books found",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, books)
 	}
 }

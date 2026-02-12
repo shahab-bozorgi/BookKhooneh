@@ -15,7 +15,6 @@ type CreateBookResponse struct {
 }
 
 type BookResponse struct {
-	ID          uint   `json:"id" example:"1"`
 	Title       string `json:"title" example:"bigane"`
 	Author      string `json:"author" example:"kamo"`
 	Description string `json:"description" example:"A nice book"`
@@ -36,6 +35,11 @@ type UpdateBookResponse struct {
 
 type DeleteBookResponse struct {
 	Message string `json:"message" example:"Book deleted successfully"`
+}
+
+type FilterBooksRequest struct {
+	Title  []string `form:"title"`
+	Author []string `form:"author"`
 }
 
 type BookErrorResponse struct {

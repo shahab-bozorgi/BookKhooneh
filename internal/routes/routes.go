@@ -32,6 +32,7 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		books.POST("/create", middlewares.AuthMiddleware(db), middlewares.AdminMiddleware(), handlers.CreateBookHandler(db))
 		books.GET("/get_all", handlers.GetAllBooksHandler(db))
 		books.GET("/get/:id", handlers.GetBookHandler(db))
+		books.GET("/search", middlewares.AuthMiddleware(db), handlers.FilterBooksHandler(db))
 		books.PATCH("/update/:id", middlewares.AuthMiddleware(db), middlewares.AdminMiddleware(), handlers.UpdateBookHandler(db))
 		books.DELETE("/delete/:id", middlewares.AuthMiddleware(db), middlewares.AdminMiddleware(), handlers.DeleteBookHandler(db))
 	}
