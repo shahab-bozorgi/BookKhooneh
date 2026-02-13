@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"BookKhoone/infrastructure/utils"
+	"BookKhoone/internal/application"
+	"BookKhoone/internal/domain"
 	"BookKhoone/internal/dto"
-	"BookKhoone/internal/models"
-	"BookKhoone/internal/services"
-	"BookKhoone/internal/utils"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
@@ -46,14 +46,14 @@ func CreateBookHandler(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		userIDPtr := userID
-		book := models.Book{
+		book := domain.Book{
 			Title:       input.Title,
 			Author:      input.Author,
 			Description: input.Description,
 			UserID:      &userIDPtr,
 		}
 
-		createdBook, err := services.CreateBook(db, book)
+		createdBook, err := application.CreateBook(db, book)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{Error: "Failed to create book"})
 			return
@@ -82,13 +82,13 @@ func CreateBookHandler(db *gorm.DB) gin.HandlerFunc {
 // @Router /books/get_all [get]
 func GetAllBooksHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		res, err := utils.Paginate[models.Book](c, db)
+		res, err := utils.Paginate[domain.Book](c, db)
 		if err != nil {
 			c.JSON(500, dto.BookErrorResponse{Error: err.Error()})
 			return
 		}
 
-		booksWithStats, err := services.GetAllBooksService(db, res.Data)
+		booksWithStats, err := application.GetAllBooksService(db, res.Data)
 		if err != nil {
 			c.JSON(500, dto.BookErrorResponse{Error: err.Error()})
 			return
@@ -119,7 +119,7 @@ func GetBookHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
 
-		bookWithStats, err := services.GetBook(db, idParam)
+		bookWithStats, err := application.GetBook(db, idParam)
 		if err != nil {
 			c.JSON(404, gin.H{"error": "Book not found in library"})
 			return
@@ -170,7 +170,7 @@ func UpdateBookHandler(db *gorm.DB) gin.HandlerFunc {
 			updateData["description"] = input.Description
 		}
 
-		updatedBook, err := services.UpdateBook(db, uint(bookID), updateData)
+		updatedBook, err := application.UpdateBook(db, uint(bookID), updateData)
 		if err != nil {
 			c.JSON(http.StatusNotFound, dto.BookErrorResponse{Error: "Book not found or update failed"})
 			return
@@ -206,7 +206,7 @@ func DeleteBookHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		if err := services.DeleteBook(db, uint(bookID)); err != nil {
+		if err := application.DeleteBook(db, uint(bookID)); err != nil {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Book not found or deletion failed"})
 			return
 		}
@@ -238,7 +238,7 @@ func FilterBooksHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		query := db.Model(&models.Book{})
+		query := db.Model(&domain.Book{})
 		if len(filter.Author) > 0 {
 			query = query.Where("author IN ?", filter.Author)
 		}
@@ -246,7 +246,7 @@ func FilterBooksHandler(db *gorm.DB) gin.HandlerFunc {
 			query = query.Where("title IN ?", filter.Title)
 		}
 
-		paginationResult, err := utils.Paginate[models.Book](c, query)
+		paginationResult, err := utils.Paginate[domain.Book](c, query)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{
 				Error: err.Error(),

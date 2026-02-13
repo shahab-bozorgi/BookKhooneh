@@ -20,6 +20,8 @@ definitions:
       author:
         example: kamo
         type: string
+      avg_rating:
+        type: number
       description:
         example: A nice book
         type: string
@@ -57,6 +59,31 @@ definitions:
         example: 1
         type: integer
     type: object
+  dto.CreateReviewRequest:
+    properties:
+      book-id:
+        type: integer
+      comment:
+        example: This is a comment
+        type: string
+      rating:
+        type: integer
+      user-id:
+        type: integer
+    type: object
+  dto.CreateReviewResponse:
+    properties:
+      book-id:
+        type: integer
+      comment:
+        type: string
+      id:
+        type: integer
+      rating:
+        type: integer
+      user:
+        $ref: '#/definitions/dto.UserResponse'
+    type: object
   dto.DeleteBookResponse:
     properties:
       message:
@@ -67,6 +94,11 @@ definitions:
     properties:
       error:
         example: Book not found or deletion failed
+        type: string
+    type: object
+  dto.ErrorResponse:
+    properties:
+      error:
         type: string
     type: object
   dto.GetUserResponse:
@@ -149,17 +181,8 @@ definitions:
     type: object
   dto.UserResponse:
     properties:
-      avatar:
-        example: https://example.com/avatar.jpg
-        type: string
-      bio:
-        example: Backend developer
-        type: string
       email:
         example: amu@example.com
-        type: string
-      full_name:
-        example: Amu Shahab
         type: string
       id:
         example: 1
@@ -446,6 +469,42 @@ paths:
       summary: Update a book
       tags:
       - Books
+  /review/create:
+    post:
+      consumes:
+      - application/json
+      description: Create a review for a specific book. User must be authenticated.
+      parameters:
+      - description: Review data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateReviewRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.CreateReviewResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/dto.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create review for a book
+      tags:
+      - Reviews
   /users/{username}:
     get:
       consumes:

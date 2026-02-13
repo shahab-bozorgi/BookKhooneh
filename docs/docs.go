@@ -441,6 +441,63 @@ const docTemplate = `{
                 }
             }
         },
+        "/review/create": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Create a review for a specific book. User must be authenticated.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Reviews"
+                ],
+                "summary": "Create review for a book",
+                "parameters": [
+                    {
+                        "description": "Review data",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateReviewRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateReviewResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/dto.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/get_all": {
             "get": {
                 "security": [
@@ -550,6 +607,9 @@ const docTemplate = `{
                     "type": "string",
                     "example": "kamo"
                 },
+                "avg_rating": {
+                    "type": "number"
+                },
                 "description": {
                     "type": "string",
                     "example": "A nice book"
@@ -602,6 +662,44 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CreateReviewRequest": {
+            "type": "object",
+            "properties": {
+                "book-id": {
+                    "type": "integer"
+                },
+                "comment": {
+                    "type": "string",
+                    "example": "This is a comment"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "user-id": {
+                    "type": "integer"
+                }
+            }
+        },
+        "dto.CreateReviewResponse": {
+            "type": "object",
+            "properties": {
+                "book-id": {
+                    "type": "integer"
+                },
+                "comment": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "rating": {
+                    "type": "integer"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.UserResponse"
+                }
+            }
+        },
         "dto.DeleteBookResponse": {
             "type": "object",
             "properties": {
@@ -617,6 +715,14 @@ const docTemplate = `{
                 "error": {
                     "type": "string",
                     "example": "Book not found or deletion failed"
+                }
+            }
+        },
+        "dto.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
                 }
             }
         },
@@ -741,21 +847,9 @@ const docTemplate = `{
         "dto.UserResponse": {
             "type": "object",
             "properties": {
-                "avatar": {
-                    "type": "string",
-                    "example": "https://example.com/avatar.jpg"
-                },
-                "bio": {
-                    "type": "string",
-                    "example": "Backend developer"
-                },
                 "email": {
                     "type": "string",
                     "example": "amu@example.com"
-                },
-                "full_name": {
-                    "type": "string",
-                    "example": "Amu Shahab"
                 },
                 "id": {
                     "type": "integer",

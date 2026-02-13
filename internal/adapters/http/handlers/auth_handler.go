@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"BookKhoone/internal/config"
+	"BookKhoone/infrastructure/config"
+	"BookKhoone/internal/application"
+	"BookKhoone/internal/domain"
 	"BookKhoone/internal/dto"
-	"BookKhoone/internal/models"
-	"BookKhoone/internal/services"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -31,19 +31,19 @@ func RegisterHandler(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		var existing models.User
+		var existing domain.User
 		if err := db.Where("email = ? OR username = ?", input.Email, input.Username).First(&existing).Error; err == nil {
 			c.JSON(http.StatusConflict, gin.H{"error": "User already exists"})
 			return
 		}
 
-		user, err := services.CreateUser(db, input.Username, input.Email, input.Password)
+		user, err := application.CreateUser(db, input.Username, input.Email, input.Password)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 			return
 		}
 
-		token, err := services.GenerateUserToken(user.ID, cfg.JWTSecretKey)
+		token, err := application.GenerateUserToken(user.ID, cfg.JWTSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
 			return
@@ -76,13 +76,13 @@ func LoginHandler(db *gorm.DB, cfg *config.Config) gin.HandlerFunc {
 			return
 		}
 
-		user, err := services.LoginUser(db, req.Username, req.Password)
+		user, err := application.LoginUser(db, req.Username, req.Password)
 		if err != nil {
 			c.JSON(http.StatusUnauthorized, dto.LoginErrorResponse{Error: err.Error()})
 			return
 		}
 
-		token, err := services.GenerateUserToken(user.ID, cfg.JWTSecretKey)
+		token, err := application.GenerateUserToken(user.ID, cfg.JWTSecretKey)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.LoginErrorResponse{Error: "Failed to generate token"})
 			return

@@ -1,27 +1,27 @@
-package services
+package application
 
 import (
+	"BookKhoone/internal/domain"
 	"BookKhoone/internal/dto"
-	"BookKhoone/internal/models"
 	"database/sql"
 	"errors"
 	"gorm.io/gorm"
 	"math"
 )
 
-func CreateBook(db *gorm.DB, book models.Book) (*models.Book, error) {
+func CreateBook(db *gorm.DB, book domain.Book) (*domain.Book, error) {
 	if err := db.Create(&book).Error; err != nil {
 		return nil, err
 	}
 	return &book, nil
 }
 
-func GetAllBooksService(db *gorm.DB, books []models.Book) ([]dto.BookResponse, error) {
+func GetAllBooksService(db *gorm.DB, books []domain.Book) ([]dto.BookResponse, error) {
 	var result []dto.BookResponse
 
 	for _, book := range books {
 		var avg sql.NullFloat64
-		db.Model(&models.Review{}).
+		db.Model(&domain.Review{}).
 			Where("book_id = ?", book.ID).
 			Select("AVG(rating)").
 			Scan(&avg)
@@ -43,14 +43,14 @@ func GetAllBooksService(db *gorm.DB, books []models.Book) ([]dto.BookResponse, e
 }
 
 func GetBook(db *gorm.DB, id string) (*dto.BookWithStats, error) {
-	var book models.Book
+	var book domain.Book
 	if err := db.Where("id = ?", id).First(&book).Error; err != nil {
 		return nil, err
 	}
 
 	var avgRating float64
 
-	db.Model(&models.Review{}).Where("book_id = ?", book.ID).Select("AVG(rating)").Scan(&avgRating)
+	db.Model(&domain.Review{}).Where("book_id = ?", book.ID).Select("AVG(rating)").Scan(&avgRating)
 	avgRating = math.Round(avgRating*10) / 10
 
 	return &dto.BookWithStats{
@@ -59,8 +59,8 @@ func GetBook(db *gorm.DB, id string) (*dto.BookWithStats, error) {
 	}, nil
 }
 
-func UpdateBook(db *gorm.DB, id uint, updatedData map[string]interface{}) (*models.Book, error) {
-	var book models.Book
+func UpdateBook(db *gorm.DB, id uint, updatedData map[string]interface{}) (*domain.Book, error) {
+	var book domain.Book
 
 	if err := db.First(&book, id).Error; err != nil {
 		return nil, err
@@ -74,7 +74,7 @@ func UpdateBook(db *gorm.DB, id uint, updatedData map[string]interface{}) (*mode
 }
 
 func DeleteBook(db *gorm.DB, id uint) error {
-	var book models.Book
+	var book domain.Book
 
 	if err := db.First(&book, id).Error; err != nil {
 		return err
@@ -88,14 +88,14 @@ func DeleteBook(db *gorm.DB, id uint) error {
 }
 
 func FilterBookService(db *gorm.DB, filter dto.FilterBooksRequest) ([]dto.BookResponse, error) {
-	var books []models.Book
+	var books []domain.Book
 	var response []dto.BookResponse
 
 	if len(filter.Author) == 0 && len(filter.Title) == 0 {
 		return nil, errors.New("at least one filter is required")
 	}
 
-	query := db.Model(&models.Book{})
+	query := db.Model(&domain.Book{})
 
 	if len(filter.Author) > 0 {
 		query = query.Where("author IN ?", filter.Author)

@@ -1,6 +1,6 @@
 package dto
 
-import "BookKhoone/internal/models"
+import "BookKhoone/internal/domain"
 
 type CreateBookRequest struct {
 	Title       string `json:"title" example:"The Great Gatsby"`
@@ -31,7 +31,7 @@ type PaginatedBooks struct {
 }
 
 type BookWithStats struct {
-	Book      models.Book `json:"book"`
+	Book      domain.Book `json:"book"`
 	AvgRating float64     `json:"avg_rating"`
 }
 

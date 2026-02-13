@@ -1,20 +1,20 @@
-package services
+package application
 
 import (
-	"BookKhoone/internal/models"
-	"BookKhoone/internal/utils"
+	utils2 "BookKhoone/infrastructure/utils"
+	"BookKhoone/internal/domain"
 	"errors"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
-func CreateUser(db *gorm.DB, username, email, password string) (*models.User, error) {
-	hashedPassword, err := utils.HashPassword(password)
+func CreateUser(db *gorm.DB, username, email, password string) (*domain.User, error) {
+	hashedPassword, err := utils2.HashPassword(password)
 	if err != nil {
 		return nil, err
 	}
 
-	user := &models.User{
+	user := &domain.User{
 		Username: username,
 		Email:    email,
 		Password: hashedPassword,
@@ -29,11 +29,11 @@ func CreateUser(db *gorm.DB, username, email, password string) (*models.User, er
 }
 
 func GenerateUserToken(userID uint, secret string) (string, error) {
-	return utils.GenerateJWT(userID, secret)
+	return utils2.GenerateJWT(userID, secret)
 }
 
-func LoginUser(db *gorm.DB, username, password string) (*models.User, error) {
-	var user models.User
+func LoginUser(db *gorm.DB, username, password string) (*domain.User, error) {
+	var user domain.User
 
 	if err := db.Where("username = ?", username).First(&user).Error; err != nil {
 		return nil, errors.New("user not found")

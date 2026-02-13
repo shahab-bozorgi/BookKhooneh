@@ -10,16 +10,15 @@ package main
 
 import (
 	_ "BookKhoone/docs"
-	"BookKhoone/internal/config"
-	"BookKhoone/internal/database"
-	"BookKhoone/internal/routes"
-
+	"BookKhoone/infrastructure/config"
+	"BookKhoone/internal/adapters/http/routes"
+	"BookKhoone/internal/adapters/persistence"
 	"github.com/gin-gonic/gin"
 )
 
 func main() {
 	cfg := config.LoadConfig()
-	db := database.Connect(cfg)
+	db := persistence.Connect(cfg)
 	r := gin.Default()
 
 	routes.SetupRoutes(r, db, cfg)

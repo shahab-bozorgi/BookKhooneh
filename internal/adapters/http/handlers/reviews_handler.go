@@ -1,14 +1,27 @@
 package handlers
 
 import (
+	"BookKhoone/internal/application"
+	"BookKhoone/internal/domain"
 	"BookKhoone/internal/dto"
-	"BookKhoone/internal/models"
-	"BookKhoone/internal/services"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 	"net/http"
 )
 
+// CreateReviewBookHandler godoc
+// @Summary Create review for a book
+// @Description Create a review for a specific book. User must be authenticated.
+// @Tags Reviews
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param request body dto.CreateReviewRequest true "Review data"
+// @Success 200 {object} dto.CreateReviewResponse
+// @Failure 400 {object} dto.ErrorResponse
+// @Failure 401 {object} dto.ErrorResponse
+// @Failure 500 {object} dto.ErrorResponse
+// @Router /review/create [post]
 func CreateReviewBookHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		userIDValue, exists := c.Get("user_id")
@@ -33,26 +46,26 @@ func CreateReviewBookHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var book models.Book
+		var book domain.Book
 		if err := db.First(&book, input.BookID).Error; err != nil {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "Book not found"})
 			return
 		}
 
-		var user models.User
+		var user domain.User
 		if err := db.First(&user, userID).Error; err != nil {
 			c.JSON(http.StatusBadRequest, dto.ErrorResponse{Error: "User not found"})
 			return
 		}
 
-		review := models.Review{
+		review := domain.Review{
 			BookID:  input.BookID,
 			UserID:  userID,
 			Rating:  input.Rating,
 			Comment: input.Comment,
 		}
 
-		createdReview, err := services.CreateBookReviewsService(db, review)
+		createdReview, err := application.CreateBookReviewsService(db, review)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, dto.ErrorResponse{Error: err.Error()})
 			return

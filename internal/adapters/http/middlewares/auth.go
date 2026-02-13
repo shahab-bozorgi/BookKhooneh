@@ -1,11 +1,11 @@
 package middlewares
 
 import (
-	"BookKhoone/internal/models"
+	"BookKhoone/infrastructure/utils"
+	"BookKhoone/internal/domain"
 	"gorm.io/gorm"
 	"strings"
 
-	"BookKhoone/internal/utils"
 	"github.com/gin-gonic/gin"
 )
 
@@ -20,7 +20,7 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		var user models.User
+		var user domain.User
 		if err := db.First(&user, userID).Error; err != nil {
 			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
 			return

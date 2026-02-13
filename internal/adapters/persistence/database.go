@@ -1,11 +1,11 @@
-package database
+package persistence
 
 import (
+	"BookKhoone/infrastructure/config"
 	"fmt"
 	"log"
 
-	"BookKhoone/internal/config"
-	"BookKhoone/internal/models"
+	"BookKhoone/internal/domain"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -17,10 +17,10 @@ func Connect(cfg *config.Config) *gorm.DB {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Failed to connect to database: %v", err)
+		log.Fatalf("Failed to connect to adapters: %v", err)
 	}
 
-	err = db.AutoMigrate(&models.User{}, &models.Book{}, &models.Review{})
+	err = db.AutoMigrate(&domain.User{}, &domain.Book{}, &domain.Review{})
 	if err != nil {
 		log.Fatalf("Auto migration failed: %v", err)
 	}
