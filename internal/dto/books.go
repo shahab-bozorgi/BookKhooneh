@@ -1,5 +1,7 @@
 package dto
 
+import "BookKhoone/internal/models"
+
 type CreateBookRequest struct {
 	Title       string `json:"title" example:"The Great Gatsby"`
 	Author      string `json:"author" example:"F. Scott Fitzgerald"`
@@ -15,9 +17,22 @@ type CreateBookResponse struct {
 }
 
 type BookResponse struct {
-	Title       string `json:"title" example:"bigane"`
-	Author      string `json:"author" example:"kamo"`
-	Description string `json:"description" example:"A nice book"`
+	Title       string  `json:"title" example:"bigane"`
+	Author      string  `json:"author" example:"kamo"`
+	Description string  `json:"description" example:"A nice book"`
+	AvgRating   float64 `json:"avg_rating"`
+}
+
+type PaginatedBooks struct {
+	Page  int            `json:"page"`
+	Size  int            `json:"size"`
+	Total int64          `json:"total"`
+	Books []BookResponse `json:"books"`
+}
+
+type BookWithStats struct {
+	Book      models.Book `json:"book"`
+	AvgRating float64     `json:"avg_rating"`
 }
 
 type UpdateBookRequest struct {

@@ -8,9 +8,6 @@ type UserResponse struct {
 	ID       uint   `json:"id" example:"1"`
 	Username string `json:"username" example:"amu"`
 	Email    string `json:"email" example:"amu@example.com"`
-	FullName string `json:"full_name" example:"Amu Shahab"`
-	Avatar   string `json:"avatar" example:"https://example.com/avatar.jpg"`
-	Bio      string `json:"bio" example:"Backend developer"`
 }
 
 type GetUserResponse struct {

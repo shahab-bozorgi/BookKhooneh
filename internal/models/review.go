@@ -8,7 +8,7 @@ type Review struct {
 	BookID uint `gorm:"not null"`
 	UserID uint `gorm:"not null"`
 
-	Rating  int    `gorm:"not null;check:rating >= 1 AND rating <= 5"`
+	Rating  int    `gorm:"not null;check:rating >= 1 AND rating <= 10"`
 	Comment string `gorm:"type:text"`
 
 	Book Book `gorm:"constraint:OnDelete:CASCADE;"`

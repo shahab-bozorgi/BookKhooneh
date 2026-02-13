@@ -45,7 +45,6 @@ func CreateBookHandler(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// استفاده از pointer برای UserID
 		userIDPtr := userID
 		book := models.Book{
 			Title:       input.Title,
@@ -85,24 +84,21 @@ func GetAllBooksHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		res, err := utils.Paginate[models.Book](c, db)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, dto.BookErrorResponse{Error: err.Error()})
+			c.JSON(500, dto.BookErrorResponse{Error: err.Error()})
 			return
 		}
 
-		var books []dto.BookResponse
-		for _, book := range res.Data {
-			books = append(books, dto.BookResponse{
-				Title:       book.Title,
-				Author:      book.Author,
-				Description: book.Description,
-			})
+		booksWithStats, err := services.GetAllBooksService(db, res.Data)
+		if err != nil {
+			c.JSON(500, dto.BookErrorResponse{Error: err.Error()})
+			return
 		}
 
 		c.JSON(200, gin.H{
 			"page":  res.Page,
 			"size":  res.Size,
 			"total": res.Total,
-			"books": books,
+			"books": booksWithStats,
 		})
 	}
 }
@@ -123,13 +119,13 @@ func GetBookHandler(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		idParam := c.Param("id")
 
-		book, err := services.GetBook(db, idParam)
+		bookWithStats, err := services.GetBook(db, idParam)
 		if err != nil {
 			c.JSON(404, gin.H{"error": "Book not found in library"})
 			return
 		}
 
-		c.JSON(200, gin.H{"book": book})
+		c.JSON(200, gin.H{"book": bookWithStats})
 	}
 }
 

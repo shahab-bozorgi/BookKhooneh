@@ -36,5 +36,9 @@ func SetupRoutes(r *gin.Engine, db *gorm.DB, cfg *config.Config) {
 		books.PATCH("/update/:id", middlewares.AuthMiddleware(db), middlewares.AdminMiddleware(), handlers.UpdateBookHandler(db))
 		books.DELETE("/delete/:id", middlewares.AuthMiddleware(db), middlewares.AdminMiddleware(), handlers.DeleteBookHandler(db))
 	}
+	reviews := api.Group("/reviews")
+	{
+		reviews.POST("/create", middlewares.AuthMiddleware(db), handlers.CreateReviewBookHandler(db))
+	}
 
 }

@@ -3,8 +3,10 @@ package services
 import (
 	"BookKhoone/internal/dto"
 	"BookKhoone/internal/models"
+	"database/sql"
 	"errors"
 	"gorm.io/gorm"
+	"math"
 )
 
 func CreateBook(db *gorm.DB, book models.Book) (*models.Book, error) {
@@ -14,20 +16,47 @@ func CreateBook(db *gorm.DB, book models.Book) (*models.Book, error) {
 	return &book, nil
 }
 
-func GetAllBooks(db *gorm.DB) ([]models.Book, error) {
-	var books []models.Book
-	if err := db.Find(&books).Error; err != nil {
-		return nil, err
+func GetAllBooksService(db *gorm.DB, books []models.Book) ([]dto.BookResponse, error) {
+	var result []dto.BookResponse
+
+	for _, book := range books {
+		var avg sql.NullFloat64
+		db.Model(&models.Review{}).
+			Where("book_id = ?", book.ID).
+			Select("AVG(rating)").
+			Scan(&avg)
+
+		avgRating := 0.0
+		if avg.Valid {
+			avgRating = math.Round(avg.Float64*10) / 10
+		}
+
+		result = append(result, dto.BookResponse{
+			Title:       book.Title,
+			Author:      book.Author,
+			Description: book.Description,
+			AvgRating:   avgRating,
+		})
 	}
-	return books, nil
+
+	return result, nil
 }
 
-func GetBook(db *gorm.DB, id string) (models.Book, error) {
+func GetBook(db *gorm.DB, id string) (*dto.BookWithStats, error) {
 	var book models.Book
 	if err := db.Where("id = ?", id).First(&book).Error; err != nil {
-		return models.Book{}, err
+		return nil, err
 	}
-	return book, nil
+
+	var avgRating float64
+
+	db.Model(&models.Review{}).Where("book_id = ?", book.ID).Select("AVG(rating)").Scan(&avgRating)
+	avgRating = math.Round(avgRating*10) / 10
+
+	return &dto.BookWithStats{
+		Book:      book,
+		AvgRating: avgRating,
+	}, nil
 }
 
 func UpdateBook(db *gorm.DB, id uint, updatedData map[string]interface{}) (*models.Book, error) {
